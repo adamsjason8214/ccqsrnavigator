@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Netlify Form Test</title>
+</head>
+<body>
+    <h1>Netlify Form Test</h1>
+    
+    <!-- Visible test form -->
+    <form name="checklist-email-test" method="POST" data-netlify="true">
+        <p>
+            <label>To: <input type="text" name="to" value="save-jSnJTgoL5CnR@3.basecamp.com" readonly /></label>
+        </p>
+        <p>
+            <label>Subject: <input type="text" name="subject" value="Test Subject" /></label>
+        </p>
+        <p>
+            <label>Message: <textarea name="message">Test message from Netlify form</textarea></label>
+        </p>
+        <p>
+            <label>Store: <input type="text" name="store" value="Test Store" /></label>
+        </p>
+        <p>
+            <label>Manager: <input type="text" name="manager" value="Test Manager" /></label>
+        </p>
+        <p>
+            <button type="submit">Send Test</button>
+        </p>
+    </form>
+    
+    <hr>
+    
+    <h2>JavaScript Submission Test</h2>
+    <button onclick="testSubmit()">Test JS Submit</button>
+    
+    <script>
+        async function testSubmit() {
+            const formData = new FormData();
+            formData.append('form-name', 'checklist-email-test');
+            formData.append('to', 'save-jSnJTgoL5CnR@3.basecamp.com');
+            formData.append('subject', 'JS Test Subject');
+            formData.append('message', 'Test from JavaScript');
+            formData.append('store', 'JS Test Store');
+            formData.append('manager', 'JS Test Manager');
+            
+            try {
+                const response = await fetch('/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    alert('Form submitted successfully!');
+                } else {
+                    alert('Form submission failed: ' + response.status);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

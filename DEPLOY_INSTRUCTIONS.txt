@@ -1,0 +1,65 @@
+NETLIFY DEPLOYMENT INSTRUCTIONS
+================================
+
+This folder contains a clean build ready for Netlify deployment.
+
+IMPORTANT: Before deploying, you must set up environment variables in Netlify!
+
+STEP 1: SET UP NETLIFY ENVIRONMENT VARIABLE
+-------------------------------------------
+1. Go to your Netlify dashboard
+2. Select your site (or create a new one)
+3. Go to Site Settings > Environment Variables
+4. Add the following variable:
+   
+   Variable name: DATABASE_URL
+   Value: postgresql://neondb_owner:npg_e0JRdGQ1WNgm@ep-odd-dew-aex0vnh8-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+STEP 2: DEPLOY TO NETLIFY
+-------------------------
+Option A - Using Netlify CLI:
+1. Install Netlify CLI if not already installed: npm install -g netlify-cli
+2. Navigate to this directory: cd /Users/jasonadams/Desktop/NEON_DEPLOY
+3. Run: netlify init (for new site) or netlify link (for existing site)
+4. Run: netlify deploy --prod
+
+Option B - Using Git:
+1. Initialize git: git init
+2. Add files: git add .
+3. Commit: git commit -m "Initial deployment"
+4. Push to GitHub/GitLab/Bitbucket
+5. Connect repository to Netlify
+
+Option C - Manual Upload:
+1. Drag and drop this entire folder to Netlify dashboard
+
+STEP 3: VERIFY DEPLOYMENT
+-------------------------
+After deployment:
+1. Check that all functions are deployed (Site Settings > Functions)
+2. Test the site functionality
+3. Verify database connection by creating a test user
+
+FILES INCLUDED
+--------------
+- index.html (main application)
+- *.js (application JavaScript files)
+- package.json (dependencies)
+- netlify.toml (Netlify configuration)
+- netlify/functions/* (serverless functions)
+- .gitignore (for version control)
+
+EXCLUDED FILES
+--------------
+- Test files (test-*.js)
+- Database setup scripts
+- Debug files
+- Documentation files
+- node_modules (will be installed by Netlify)
+
+NOTES
+-----
+- Netlify will automatically install dependencies from package.json
+- Functions will be available at /.netlify/functions/[function-name]
+- The site uses Neon PostgreSQL database for all data storage
+- Make sure to keep your DATABASE_URL secure and never commit it to git

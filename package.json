@@ -1,0 +1,27 @@
+{
+  "name": "ccqsr-navigator",
+  "version": "1.0.0",
+  "description": "Project with Neon PostgreSQL database integration",
+  "main": "index.html",
+  "scripts": {
+    "setup-db": "node neon-db-setup.js",
+    "test-connection": "node test-neon-connection.js",
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'",
+    "backup": "node backup-database.js",
+    "restore": "node restore-database.js",
+    "pre-deploy": "npm run backup && netlify deploy --prod",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.0.8",
+    "@netlify/functions": "^2.4.0",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^7.0.5",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.10.1"
+  }
+}
