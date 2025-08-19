@@ -1,6 +1,7 @@
 [build]
   publish = "dist"
-  functions = "dist/netlify/functions"
+  functions = "netlify/functions"
+  command = "echo 'No build needed'"
 
 [[redirects]]
   from = "/*"
