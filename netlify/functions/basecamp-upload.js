@@ -141,13 +141,25 @@ exports.handler = async (event, context) => {
     // Step 2: Create document in vault with the attachment
     const documentTitle = filename.replace('.pdf', '');
     
+    // Format time in Eastern timezone
+    const easternTime = new Date().toLocaleString('en-US', { 
+      timeZone: 'America/New_York',
+      month: 'numeric',
+      day: 'numeric', 
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+    
     // Embed the attachment in the content HTML
     const documentContent = `<div>
       <p><strong>Type:</strong> ${metadata.checklistType || 'Schedule'}</p>
       <p><strong>Location:</strong> ${metadata.storeLocation || 'N/A'}</p>
       <p><strong>Manager:</strong> ${metadata.managerName || 'N/A'}</p>
       <p><strong>Date:</strong> ${metadata.date || new Date().toLocaleDateString()}</p>
-      <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
+      <p><strong>Submitted:</strong> ${easternTime} EST</p>
     </div>
     <br><br>
     <bc-attachment sgid="${attachmentResponse.attachable_sgid}" content-type="application/pdf" filename="${filename}"></bc-attachment>`;
@@ -209,6 +221,18 @@ exports.handler = async (event, context) => {
 
     console.log('=== Basecamp Upload Complete ===');
     
+    // Format response time in Eastern timezone
+    const responseTime = new Date().toLocaleString('en-US', { 
+      timeZone: 'America/New_York',
+      month: 'numeric',
+      day: 'numeric', 
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+    
     return {
       statusCode: 200,
       headers,
@@ -220,7 +244,7 @@ exports.handler = async (event, context) => {
         details: {
           filename: filename,
           ...metadata,
-          submittedAt: new Date().toISOString()
+          submittedAt: responseTime + ' EST'
         }
       })
     };
