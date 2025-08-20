@@ -431,15 +431,15 @@ const BasecampIntegration = {
                 
                 if (isTacoBrand) {
                     // Taco brand specific role categories
-                    if (role.includes('general manager') || role.includes('gm')) {
+                    if (role.includes('gm')) {
                         roleCategory = 'managers';
                         isGM = true;
                         isSalaried = true; // GMs are typically salaried
-                    } else if (role === '!bartender') {
-                        roleCategory = 'managers'; // !Bartender counts as manager
+                    } else if (role === 'bartender lead') {
+                        roleCategory = 'managers'; // Bartender Lead counts as manager
                         isHourlyManager = true;
-                    } else if (role === '!cook') {
-                        roleCategory = 'managers'; // !Cook counts as manager
+                    } else if (role === 'cook lead') {
+                        roleCategory = 'managers'; // Cook Lead counts as manager
                         isHourlyManager = true;
                     } else if (role === 'bartender') {
                         roleCategory = 'crew'; // Regular Bartender counts as crew
@@ -703,8 +703,8 @@ const BasecampIntegration = {
                 
                 if (isTacoBrand) {
                     // For Taco locations, show different role breakdown
-                    doc.text(`!Bar/!Cook: ${shiftData.managers}`, 210, yPos);
-                    doc.text(`Bar/Cook: ${shiftData.crew}`, 320, yPos);
+                    doc.text(`Leads: ${shiftData.managers}`, 210, yPos);
+                    doc.text(`Crew: ${shiftData.crew}`, 320, yPos);
                     doc.text(`Total: ${shiftData.managers + shiftData.crew}`, 420, yPos);
                 } else if (isDoughnutBrand) {
                     // For Doughnut locations, show each position separately
@@ -758,9 +758,9 @@ const BasecampIntegration = {
         
         if (isTacoBrand) {
             // For Taco locations, show Taco-specific role labels
-            doc.text(`Total Weekly Bartender/Cook Hours: ${totalCrewHours.toFixed(1)} hours`, 60, yPos);
+            doc.text(`Total Weekly Crew Hours: ${totalCrewHours.toFixed(1)} hours`, 60, yPos);
             yPos += 15;
-            doc.text(`Total Weekly !Bartender/!Cook Hours: ${totalHourlyManagerHours.toFixed(1)} hours`, 60, yPos);
+            doc.text(`Total Weekly Lead Hours: ${totalHourlyManagerHours.toFixed(1)} hours`, 60, yPos);
             yPos += 15;
             doc.text(`Total Weekly GM Hours: ${totalGMHours.toFixed(1)} hours`, 60, yPos);
             yPos += 15;
