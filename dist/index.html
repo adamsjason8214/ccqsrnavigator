@@ -5790,7 +5790,7 @@
                     name: emp.name,
                     brand: emp.brand,
                     location: emp.location_id,
-                    role: emp.role,
+                    role: emp.role ? emp.role.trim() : '',  // Trim any whitespace from role
                     payType: emp.pay_type,
                     payRate: parseFloat(emp.pay_rate),
                     email: emp.email,
@@ -6732,6 +6732,8 @@
                     scheduleData[empId].payRate = employee.payRate;
                     scheduleData[empId].payType = employee.payType;
                     
+                    console.log('Employee selected:', employee.name, 'Role:', employee.role);
+                    
                     // Update the role dropdown to show employee's assigned role
                     const roleSelect = document.querySelector(`select[data-field="role"][data-emp="${empId}"]`);
                     if (roleSelect) {
@@ -6739,8 +6741,30 @@
                         const currentBrand = getCurrentBrand();
                         const currentLocation = getCurrentLocation();
                         roleSelect.innerHTML = getScheduleRoleOptions(currentBrand, currentLocation, employee.role);
+                        
+                        console.log('Role options HTML:', roleSelect.innerHTML);
+                        console.log('Setting role value to:', employee.role);
+                        
                         // Set the value to the employee's role
                         roleSelect.value = employee.role || '';
+                        
+                        // Check if the value was set correctly
+                        console.log('Role select value after setting:', roleSelect.value);
+                        
+                        // If the value didn't set (empty), try to find a matching option
+                        if (!roleSelect.value && employee.role) {
+                            // Try to find the option that matches the role
+                            const options = roleSelect.options;
+                            for (let i = 0; i < options.length; i++) {
+                                // Case-insensitive comparison with trimming
+                                if (options[i].value.toLowerCase().trim() === employee.role.toLowerCase().trim()) {
+                                    roleSelect.value = options[i].value;
+                                    console.log('Found matching role option:', options[i].value);
+                                    break;
+                                }
+                            }
+                        }
+                        
                         // Disable the role selector since it should be auto-filled
                         roleSelect.disabled = true;
                     }
