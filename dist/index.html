@@ -5694,6 +5694,8 @@
             
             try {
                 const location = getCurrentLocation();
+                console.log('Loading employees for location:', location);
+                
                 if (!location) {
                     console.warn('No location set, cannot load employees');
                     employees = [];
@@ -5701,7 +5703,15 @@
                 }
                 
                 // Load employees from database for current location
+                console.log('Calling DB_API.employees.get with location:', location);
                 const dbEmployees = await DB_API.employees.get(location);
+                console.log('Database returned employees:', dbEmployees);
+                
+                // Also log if we get an empty array
+                if (!dbEmployees || dbEmployees.length === 0) {
+                    console.warn('No employees found in database for location:', location);
+                    console.log('Try checking if employees exist with: SELECT * FROM employees WHERE location_id =', location);
+                }
                 
                 // Convert database format to local format
                 employees = dbEmployees.map(emp => ({
@@ -7735,8 +7745,12 @@
             if (tabName === 'schedule') {
                 // Start auto-refresh when entering schedule tab
                 startScheduleAutoRefresh();
-                // Load latest data immediately
-                loadScheduleData().then(() => {
+                // Load employees from database first
+                loadEmployeeData().then(() => {
+                    console.log('Employees loaded for schedule tab:', employees.length);
+                    // Then load schedule data
+                    return loadScheduleData();
+                }).then(() => {
                     renderScheduleTable();
                     updateScheduleTotals();
                 });
