@@ -3700,21 +3700,52 @@
             // Check if we're on the schedule tab
             if (currentTab === 'schedule') {
                 if (!location) {
-                    // No location selected - show message
-                    const scheduleSection = document.getElementById('scheduleSection');
-                    if (scheduleSection) {
-                        const scheduleContent = scheduleSection.querySelector('.schedule-content') || scheduleSection;
-                        scheduleContent.innerHTML = `
-                            <div style="text-align: center; padding: 50px; background: #f8f9fa; border-radius: 10px; margin: 20px;">
-                                <i class="fas fa-map-marker-alt" style="font-size: 48px; color: #e74c3c; margin-bottom: 20px;"></i>
-                                <h2 style="color: #2c3e50; margin-bottom: 10px;">No Location Selected</h2>
-                                <p style="color: #7f8c8d; font-size: 18px;">Please select a location from the dropdown above to view and manage the schedule.</p>
-                            </div>
-                        `;
+                    // No location selected - hide schedule and show message
+                    const scheduleTable = document.getElementById('scheduleTable');
+                    const scheduleControls = document.querySelector('.schedule-controls');
+                    const budgetSection = document.querySelector('.card:has(#totalScheduledPay)');
+                    
+                    // Hide schedule elements
+                    if (scheduleTable) scheduleTable.style.display = 'none';
+                    if (scheduleControls) scheduleControls.style.display = 'none';
+                    if (budgetSection) budgetSection.style.display = 'none';
+                    
+                    // Show no location message
+                    let messageDiv = document.getElementById('noLocationMessage');
+                    if (!messageDiv) {
+                        messageDiv = document.createElement('div');
+                        messageDiv.id = 'noLocationMessage';
+                        const scheduleSection = document.getElementById('scheduleSection');
+                        if (scheduleSection) {
+                            scheduleSection.insertBefore(messageDiv, scheduleSection.firstChild);
+                        }
                     }
+                    
+                    messageDiv.innerHTML = `
+                        <div style="text-align: center; padding: 50px; background: #f8f9fa; border-radius: 10px; margin: 20px;">
+                            <i class="fas fa-map-marker-alt" style="font-size: 48px; color: #e74c3c; margin-bottom: 20px;"></i>
+                            <h2 style="color: #2c3e50; margin-bottom: 10px;">No Location Selected</h2>
+                            <p style="color: #7f8c8d; font-size: 18px;">Please select a location from the dropdown above to view and manage the schedule.</p>
+                        </div>
+                    `;
+                    messageDiv.style.display = 'block';
+                    
                     stopScheduleAutoRefresh();
                 } else {
-                    // Location selected - load and render schedule
+                    // Location selected - hide message and show schedule
+                    const messageDiv = document.getElementById('noLocationMessage');
+                    if (messageDiv) messageDiv.style.display = 'none';
+                    
+                    const scheduleTable = document.getElementById('scheduleTable');
+                    const scheduleControls = document.querySelector('.schedule-controls');
+                    const budgetSection = document.querySelector('.card:has(#totalScheduledPay)');
+                    
+                    // Show schedule elements
+                    if (scheduleTable) scheduleTable.style.display = '';
+                    if (scheduleControls) scheduleControls.style.display = '';
+                    if (budgetSection) budgetSection.style.display = '';
+                    
+                    // Load and render schedule
                     await loadScheduleData();
                     if (typeof renderScheduleTable === 'function') {
                         renderScheduleTable();
@@ -3726,8 +3757,10 @@
                     startScheduleAutoRefresh();
                 }
             } else {
-                // Not on schedule tab, just load the data
-                await loadScheduleData();
+                // Not on schedule tab, just load the data if location is selected
+                if (location) {
+                    await loadScheduleData();
+                }
             }
             
             loadPricingData(currentUser.email);
@@ -6869,6 +6902,12 @@
         }
         
         function updateScheduleTotals() {
+            // Don't update if no location is selected
+            if (!getCurrentLocation()) {
+                console.log('No location selected, skipping schedule totals update');
+                return;
+            }
+            
             const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
             const dayTotals = { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
             let totalScheduledPay = 0;
@@ -7067,6 +7106,12 @@
         }
         
         function updateBudgetComparison(totalScheduledPay) {
+            // Don't update budget if no location is selected
+            if (!getCurrentLocation()) {
+                console.log('No location selected, skipping budget update');
+                return;
+            }
+            
             console.log('=== Updating Budget Comparison ===');
             console.log('Total Scheduled Pay:', totalScheduledPay);
             console.log('Current Week Sales:', currentWeekSales);
@@ -7127,18 +7172,29 @@
             } else {
                 console.error('Could not find totalScheduledPay element');
             }
-            document.getElementById('weeklyPayrollBudget').textContent = `$${weeklyPayrollBudget.toFixed(2)}`;
-            document.getElementById('gmPayTotal').textContent = `$${gmPayTotal.toFixed(2)}`;
+            const weeklyPayrollBudgetElement = document.getElementById('weeklyPayrollBudget');
+            if (weeklyPayrollBudgetElement) {
+                weeklyPayrollBudgetElement.textContent = `$${weeklyPayrollBudget.toFixed(2)}`;
+            }
+            
+            const gmPayTotalElement = document.getElementById('gmPayTotal');
+            if (gmPayTotalElement) {
+                gmPayTotalElement.textContent = `$${gmPayTotal.toFixed(2)}`;
+            }
             
             const variance = validScheduledPay - weeklyPayrollBudget;
             const varianceElement = document.getElementById('budgetVariance');
-            varianceElement.textContent = `$${Math.abs(variance).toFixed(2)} ${variance >= 0 ? 'Over' : 'Under'}`;
-            varianceElement.className = variance >= 0 ? 'over-budget' : 'under-budget';
+            if (varianceElement) {
+                varianceElement.textContent = `$${Math.abs(variance).toFixed(2)} ${variance >= 0 ? 'Over' : 'Under'}`;
+                varianceElement.className = variance >= 0 ? 'over-budget' : 'under-budget';
+            }
             
             const percentage = weeklyPayrollBudget > 0 ? (validScheduledPay / weeklyPayrollBudget * 100) : 0;
             const percentageElement = document.getElementById('budgetPercentage');
-            percentageElement.textContent = `${percentage.toFixed(1)}%`;
-            percentageElement.className = percentage > 100 ? 'over-budget' : 'under-budget';
+            if (percentageElement) {
+                percentageElement.textContent = `${percentage.toFixed(1)}%`;
+                percentageElement.className = percentage > 100 ? 'over-budget' : 'under-budget';
+            }
         }
         
         function updateDailySalesDisplay() {
@@ -7855,22 +7911,53 @@
                 const currentLocation = getCurrentLocation();
                 
                 if (!currentLocation) {
-                    // No location selected - show message instead of loading schedule
-                    const scheduleSection = document.getElementById('scheduleSection');
-                    if (scheduleSection) {
-                        const scheduleContent = scheduleSection.querySelector('.schedule-content') || scheduleSection;
-                        scheduleContent.innerHTML = `
-                            <div style="text-align: center; padding: 50px; background: #f8f9fa; border-radius: 10px; margin: 20px;">
-                                <i class="fas fa-map-marker-alt" style="font-size: 48px; color: #e74c3c; margin-bottom: 20px;"></i>
-                                <h2 style="color: #2c3e50; margin-bottom: 10px;">No Location Selected</h2>
-                                <p style="color: #7f8c8d; font-size: 18px;">Please select a location from the dropdown above to view and manage the schedule.</p>
-                            </div>
-                        `;
+                    // No location selected - hide schedule table and show message
+                    const scheduleTable = document.getElementById('scheduleTable');
+                    const scheduleControls = document.querySelector('.schedule-controls');
+                    const budgetSection = document.querySelector('.card:has(#totalScheduledPay)');
+                    
+                    // Hide schedule elements
+                    if (scheduleTable) scheduleTable.style.display = 'none';
+                    if (scheduleControls) scheduleControls.style.display = 'none';
+                    if (budgetSection) budgetSection.style.display = 'none';
+                    
+                    // Show no location message
+                    let messageDiv = document.getElementById('noLocationMessage');
+                    if (!messageDiv) {
+                        messageDiv = document.createElement('div');
+                        messageDiv.id = 'noLocationMessage';
+                        const scheduleSection = document.getElementById('scheduleSection');
+                        if (scheduleSection) {
+                            scheduleSection.insertBefore(messageDiv, scheduleSection.firstChild);
+                        }
                     }
+                    
+                    messageDiv.innerHTML = `
+                        <div style="text-align: center; padding: 50px; background: #f8f9fa; border-radius: 10px; margin: 20px;">
+                            <i class="fas fa-map-marker-alt" style="font-size: 48px; color: #e74c3c; margin-bottom: 20px;"></i>
+                            <h2 style="color: #2c3e50; margin-bottom: 10px;">No Location Selected</h2>
+                            <p style="color: #7f8c8d; font-size: 18px;">Please select a location from the dropdown above to view and manage the schedule.</p>
+                        </div>
+                    `;
+                    messageDiv.style.display = 'block';
+                    
                     // Stop auto-refresh since no location
                     stopScheduleAutoRefresh();
                     return;
                 }
+                
+                // Location is selected - hide message and show schedule
+                const messageDiv = document.getElementById('noLocationMessage');
+                if (messageDiv) messageDiv.style.display = 'none';
+                
+                const scheduleTable = document.getElementById('scheduleTable');
+                const scheduleControls = document.querySelector('.schedule-controls');
+                const budgetSection = document.querySelector('.card:has(#totalScheduledPay)');
+                
+                // Show schedule elements
+                if (scheduleTable) scheduleTable.style.display = '';
+                if (scheduleControls) scheduleControls.style.display = '';
+                if (budgetSection) budgetSection.style.display = '';
                 
                 // Start auto-refresh when entering schedule tab with location
                 startScheduleAutoRefresh();
