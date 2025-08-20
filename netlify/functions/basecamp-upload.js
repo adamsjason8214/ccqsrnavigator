@@ -8,6 +8,31 @@ const ACCOUNT_ID = '6023243';
 const PROJECT_ID = '43545521';
 const VAULT_ID = '8971651842'; // Documents & Files vault for schedules
 
+function buildMultipartBody(boundary, filename, pdfBuffer) {
+  const parts = [];
+  
+  // Add name field
+  parts.push(`--${boundary}`);
+  parts.push('Content-Disposition: form-data; name="name"');
+  parts.push('');
+  parts.push(filename);
+  
+  // Add file field
+  parts.push(`--${boundary}`);
+  parts.push(`Content-Disposition: form-data; name="file"; filename="${filename}"`);
+  parts.push('Content-Type: application/pdf');
+  parts.push('');
+  
+  // Combine text parts
+  const textPart = Buffer.from(parts.join('\r\n') + '\r\n', 'utf8');
+  
+  // Add ending boundary
+  const endPart = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8');
+  
+  // Combine all parts
+  return Buffer.concat([textPart, pdfBuffer, endPart]);
+}
+
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -57,28 +82,17 @@ exports.handler = async (event, context) => {
 
     console.log('=== Starting Basecamp Upload ===');
     console.log('Filename:', filename);
-    console.log('Vault ID:', VAULT_ID);
+    console.log('PDF size (base64):', pdfContent.length);
+
+    // Convert base64 to buffer
+    const pdfBuffer = Buffer.from(pdfContent, 'base64');
+    console.log('PDF size (binary):', pdfBuffer.length, 'bytes');
 
     // Step 1: Upload PDF as attachment to Basecamp
-    const pdfBuffer = Buffer.from(pdfContent, 'base64');
     const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
-    
-    // Build multipart form data with binary PDF
-    const textParts = [];
-    textParts.push(`--${boundary}`);
-    textParts.push('Content-Disposition: form-data; name="name"');
-    textParts.push('');
-    textParts.push(filename);
-    textParts.push(`--${boundary}`);
-    textParts.push(`Content-Disposition: form-data; name="file"; filename="${filename}"`);
-    textParts.push('Content-Type: application/pdf');
-    textParts.push('');
-    
-    // Combine text parts with binary PDF data
-    const textBuffer = Buffer.from(textParts.join('\r\n') + '\r\n');
-    const endBuffer = Buffer.from(`\r\n--${boundary}--\r\n`);
-    const formBuffer = Buffer.concat([textBuffer, pdfBuffer, endBuffer]);
+    const multipartBody = buildMultipartBody(boundary, filename, pdfBuffer);
 
+    console.log('Multipart body size:', multipartBody.length, 'bytes');
     console.log('Uploading attachment to Basecamp...');
 
     // Upload the attachment
@@ -91,17 +105,20 @@ exports.handler = async (event, context) => {
           'Authorization': `Bearer ${ACCESS_TOKEN}`,
           'Content-Type': `multipart/form-data; boundary=${boundary}`,
           'User-Agent': 'CCQSR Navigator (adams.jason8214@gmail.com)',
-          'Content-Length': formBuffer.length
+          'Content-Length': multipartBody.length
         }
       }, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
-          console.log('Attachment upload response:', res.statusCode);
+          console.log('Attachment response status:', res.statusCode);
+          console.log('Attachment response headers:', res.headers);
+          console.log('Attachment response body:', data);
+          
           if (res.statusCode === 201) {
             try {
               const result = JSON.parse(data);
-              console.log('Attachment created with sgid:', result.attachable_sgid);
+              console.log('Attachment SGID:', result.attachable_sgid);
               resolve(result);
             } catch (e) {
               reject(new Error(`Failed to parse attachment response: ${data}`));
@@ -117,17 +134,19 @@ exports.handler = async (event, context) => {
         reject(error);
       });
       
-      req.write(formBuffer);
+      req.write(multipartBody);
       req.end();
     });
 
     // Step 2: Create document in vault with the attachment
     const documentTitle = filename.replace('.pdf', '');
-    const documentContent = `
-      <p><strong>Store:</strong> ${metadata.storeLocation || 'N/A'}</p>
+    const documentContent = `<div>
+      <p><strong>Type:</strong> ${metadata.checklistType || 'Schedule'}</p>
+      <p><strong>Location:</strong> ${metadata.storeLocation || 'N/A'}</p>
       <p><strong>Manager:</strong> ${metadata.managerName || 'N/A'}</p>
       <p><strong>Date:</strong> ${metadata.date || new Date().toLocaleDateString()}</p>
-    `;
+      <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
+    </div>`;
 
     const documentData = JSON.stringify({
       title: documentTitle,
@@ -137,7 +156,8 @@ exports.handler = async (event, context) => {
       }]
     });
 
-    console.log('Creating document in vault...');
+    console.log('Creating document in vault with attachment...');
+    console.log('Document data:', documentData);
 
     // Create the document
     const documentResponse = await new Promise((resolve, reject) => {
@@ -155,11 +175,13 @@ exports.handler = async (event, context) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
-          console.log('Document creation response:', res.statusCode);
+          console.log('Document response status:', res.statusCode);
+          console.log('Document response:', data);
+          
           if (res.statusCode === 201) {
             try {
               const doc = JSON.parse(data);
-              console.log('Document created successfully:', doc.app_url);
+              console.log('Document created:', doc.app_url);
               resolve({
                 success: true,
                 documentUrl: doc.app_url,
@@ -202,7 +224,10 @@ exports.handler = async (event, context) => {
     };
     
   } catch (error) {
-    console.error('Basecamp upload error:', error);
+    console.error('=== Basecamp Upload Error ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
     return {
       statusCode: 500,
       headers,
