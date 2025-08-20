@@ -407,9 +407,9 @@ const BasecampIntegration = {
                 let isHourlyManager = false;
                 let isSalaried = false;
                 
-                // Check if this is a Taco or Donut brand location
+                // Check if this is a Taco or Doughnut brand location
                 const isTacoBrand = brand === 'Taco' || (location && location.toLowerCase().includes('taco'));
-                const isDonutBrand = brand === 'Donut' || (location && location.toLowerCase().includes('donut'));
+                const isDoughnutBrand = brand === 'Doughnut' || (location && location.toUpperCase().startsWith('ODT'));
                 
                 if (isTacoBrand) {
                     // Taco brand specific role categories
@@ -428,8 +428,8 @@ const BasecampIntegration = {
                     } else if (role === 'cook') {
                         roleCategory = 'crew'; // Regular Cook counts as crew
                     }
-                } else if (isDonutBrand) {
-                    // Donut brand specific role categories
+                } else if (isDoughnutBrand) {
+                    // Doughnut brand specific role categories
                     if (role.includes('gm')) {
                         roleCategory = 'managers';
                         isGM = true;
@@ -643,9 +643,9 @@ const BasecampIntegration = {
                 const shiftData = shiftAnalysis[dayKey][shiftKey];
                 const shiftLabel = shifts[index];
                 
-                // Check if this is a Taco or Donut brand location
+                // Check if this is a Taco or Doughnut brand location
                 const isTacoBrand = brand === 'Taco' || (location && location.toLowerCase().includes('taco'));
-                const isDonutBrand = brand === 'Donut' || (location && location.toLowerCase().includes('donut'));
+                const isDoughnutBrand = brand === 'Doughnut' || (location && location.toUpperCase().startsWith('ODT'));
                 
                 doc.text(`  ${shiftLabel}:`, 60, yPos);
                 
@@ -654,8 +654,8 @@ const BasecampIntegration = {
                     doc.text(`!Bar/!Cook: ${shiftData.managers}`, 210, yPos);
                     doc.text(`Bar/Cook: ${shiftData.crew}`, 320, yPos);
                     doc.text(`Total: ${shiftData.managers + shiftData.crew}`, 420, yPos);
-                } else if (isDonutBrand) {
-                    // For Donut locations, show GM and staff
+                } else if (isDoughnutBrand) {
+                    // For Doughnut locations, show role breakdown
                     doc.text(`GM: ${shiftData.managers}`, 210, yPos);
                     doc.text(`Staff: ${shiftData.crew}`, 320, yPos);
                     doc.text(`Total: ${shiftData.managers + shiftData.crew}`, 420, yPos);
