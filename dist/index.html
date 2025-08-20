@@ -5781,8 +5781,31 @@
                 
                 const weekStartStr = weekStart.toISOString().split('T')[0];
                 
+                // First check localStorage for any unsaved changes (for users without save permissions)
+                const storageKey = `schedule_${location}_${weekStartStr}`;
+                const localData = localStorage.getItem(storageKey);
+                let useLocalData = false;
+                
+                if (localData) {
+                    try {
+                        const parsed = JSON.parse(localData);
+                        console.log('Found local schedule data:', parsed);
+                        // Check if local data is newer than 24 hours
+                        const timestamp = new Date(parsed.timestamp || 0);
+                        const hoursSinceUpdate = (new Date() - timestamp) / (1000 * 60 * 60);
+                        if (hoursSinceUpdate < 24) {
+                            scheduleData = parsed.schedule || {};
+                            currentWeekSales = parsed.sales || { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
+                            console.log('Using local schedule data (', hoursSinceUpdate.toFixed(1), 'hours old)');
+                            useLocalData = true;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing local schedule data:', e);
+                    }
+                }
+                
                 // Load from database - backend expects 'location' not 'location_id' or 'brand'
-                if (typeof DB_API !== 'undefined') {
+                if (!useLocalData && typeof DB_API !== 'undefined') {
                     const params = {
                         location: location,  // Backend expects 'location'
                         week_start_date: weekStartStr
@@ -5831,8 +5854,22 @@
             const currentUserRole = currentUser?.role || 'staff';
             const currentSecurityCode = getSecurityCodeForRole(currentUserRole);
             
+            console.log('=== saveScheduleData called ===');
+            console.log('Current user:', currentUser?.email);
+            console.log('Current role:', currentUserRole);
+            console.log('Security code:', currentSecurityCode);
+            
             if (currentSecurityCode < 3) {
-                console.log('User does not have permission to save schedule (security code:', currentSecurityCode, ')');
+                console.warn('User does not have permission to save schedule (security code:', currentSecurityCode, ')');
+                console.warn('Schedule changes will not be persisted to database');
+                // Still save to localStorage for temporary persistence
+                const storageKey = `schedule_${getCurrentLocation()}_${weekStart ? weekStart.toISOString().split('T')[0] : 'current'}`;
+                localStorage.setItem(storageKey, JSON.stringify({
+                    schedule: scheduleData,
+                    sales: currentWeekSales,
+                    timestamp: new Date().toISOString()
+                }));
+                console.log('Schedule saved to localStorage with key:', storageKey);
                 return;
             }
             
@@ -6698,7 +6735,14 @@
             
             scheduleData[empId][field] = value;
             updateScheduleTotals();
-            saveScheduleData();
+            saveScheduleData().then(() => {
+                // Check if user has save permissions
+                const currentUserRole = currentUser?.role || 'staff';
+                const currentSecurityCode = getSecurityCodeForRole(currentUserRole);
+                if (currentSecurityCode < 3) {
+                    console.log('Schedule changes saved locally (insufficient permissions for database save)');
+                }
+            });
         }
         
         
@@ -7033,17 +7077,31 @@
                 }
             });
             
+            // Ensure totalScheduledPay is a valid number
+            let validScheduledPay = 0;
+            if (typeof totalScheduledPay === 'number' && !isNaN(totalScheduledPay)) {
+                validScheduledPay = totalScheduledPay;
+            } else {
+                console.warn('Invalid totalScheduledPay value:', totalScheduledPay, 'Type:', typeof totalScheduledPay);
+                validScheduledPay = 0;
+            }
+            
             // totalScheduledPay already includes GM pay, so no need to add it again
-            document.getElementById('totalScheduledPay').textContent = `$${totalScheduledPay.toFixed(2)}`;
+            const totalScheduledPayElement = document.getElementById('totalScheduledPay');
+            if (totalScheduledPayElement) {
+                totalScheduledPayElement.textContent = `$${validScheduledPay.toFixed(2)}`;
+            } else {
+                console.error('Could not find totalScheduledPay element');
+            }
             document.getElementById('weeklyPayrollBudget').textContent = `$${weeklyPayrollBudget.toFixed(2)}`;
             document.getElementById('gmPayTotal').textContent = `$${gmPayTotal.toFixed(2)}`;
             
-            const variance = totalScheduledPay - weeklyPayrollBudget;
+            const variance = validScheduledPay - weeklyPayrollBudget;
             const varianceElement = document.getElementById('budgetVariance');
             varianceElement.textContent = `$${Math.abs(variance).toFixed(2)} ${variance >= 0 ? 'Over' : 'Under'}`;
             varianceElement.className = variance >= 0 ? 'over-budget' : 'under-budget';
             
-            const percentage = weeklyPayrollBudget > 0 ? (totalScheduledPay / weeklyPayrollBudget * 100) : 0;
+            const percentage = weeklyPayrollBudget > 0 ? (validScheduledPay / weeklyPayrollBudget * 100) : 0;
             const percentageElement = document.getElementById('budgetPercentage');
             percentageElement.textContent = `${percentage.toFixed(1)}%`;
             percentageElement.className = percentage > 100 ? 'over-budget' : 'under-budget';
