@@ -140,21 +140,22 @@ exports.handler = async (event, context) => {
 
     // Step 2: Create document in vault with the attachment
     const documentTitle = filename.replace('.pdf', '');
+    
+    // Embed the attachment in the content HTML
     const documentContent = `<div>
       <p><strong>Type:</strong> ${metadata.checklistType || 'Schedule'}</p>
       <p><strong>Location:</strong> ${metadata.storeLocation || 'N/A'}</p>
       <p><strong>Manager:</strong> ${metadata.managerName || 'N/A'}</p>
       <p><strong>Date:</strong> ${metadata.date || new Date().toLocaleDateString()}</p>
       <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
-    </div>`;
+    </div>
+    <br><br>
+    <bc-attachment sgid="${attachmentResponse.attachable_sgid}" content-type="application/pdf" filename="${filename}"></bc-attachment>`;
 
     const documentData = JSON.stringify({
       title: documentTitle,
       content: documentContent,
-      status: 'active',
-      attachments: [{
-        sgid: attachmentResponse.attachable_sgid
-      }]
+      status: 'active'
     });
 
     console.log('Creating document in vault with attachment...');
