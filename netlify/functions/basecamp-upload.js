@@ -151,6 +151,7 @@ exports.handler = async (event, context) => {
     const documentData = JSON.stringify({
       title: documentTitle,
       content: documentContent,
+      status: 'active',
       attachments: [{
         sgid: attachmentResponse.attachable_sgid
       }]
