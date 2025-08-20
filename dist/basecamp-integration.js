@@ -435,15 +435,15 @@ const BasecampIntegration = {
                         roleCategory = 'managers';
                         isGM = true;
                         isSalaried = true; // GMs are typically salaried
-                    } else if (role === 'bartender lead') {
+                    } else if (role.includes('bartender lead')) {
                         roleCategory = 'managers'; // Bartender Lead counts as manager
                         isHourlyManager = true;
-                    } else if (role === 'cook lead') {
+                    } else if (role.includes('cook lead')) {
                         roleCategory = 'managers'; // Cook Lead counts as manager
                         isHourlyManager = true;
-                    } else if (role === 'bartender') {
+                    } else if (role === 'bartender' && !role.includes('lead')) {
                         roleCategory = 'crew'; // Regular Bartender counts as crew
-                    } else if (role === 'cook') {
+                    } else if (role === 'cook' && !role.includes('lead')) {
                         roleCategory = 'crew'; // Regular Cook counts as crew
                     }
                 } else if (isDoughnutBrand) {
