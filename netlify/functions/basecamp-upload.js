@@ -57,6 +57,7 @@ exports.handler = async (event, context) => {
     
     // Extract data from request
     let filename, pdfContent, metadata = {};
+    let vaultId = requestBody.vaultId || VAULT_ID; // Use provided vault ID or default
     
     if (requestBody.fileName) {
       filename = requestBody.fileName;
@@ -67,6 +68,10 @@ exports.handler = async (event, context) => {
         managerName: requestBody.managerName,
         date: requestBody.date
       };
+      // Use the vault ID from the request if provided
+      if (requestBody.vaultId) {
+        vaultId = requestBody.vaultId;
+      }
     } else {
       filename = requestBody.filename;
       pdfContent = requestBody.content;
@@ -82,6 +87,8 @@ exports.handler = async (event, context) => {
 
     console.log('=== Starting Basecamp Upload ===');
     console.log('Filename:', filename);
+    console.log('Checklist Type:', metadata.checklistType || 'Unknown');
+    console.log('Vault ID:', vaultId);
     console.log('PDF size (base64):', pdfContent.length);
 
     // Convert base64 to buffer
@@ -177,7 +184,7 @@ exports.handler = async (event, context) => {
     const documentResponse = await new Promise((resolve, reject) => {
       const req = https.request({
         hostname: '3.basecampapi.com',
-        path: `/${ACCOUNT_ID}/buckets/${PROJECT_ID}/vaults/${VAULT_ID}/documents.json`,
+        path: `/${ACCOUNT_ID}/buckets/${PROJECT_ID}/vaults/${vaultId}/documents.json`,
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${ACCESS_TOKEN}`,
