@@ -6890,14 +6890,17 @@
             const employee = employees.find(emp => emp.name === empData.name);
             if (!employee) return 0;
             
+            // Ensure payRate is a number
+            const payRate = parseFloat(employee.payRate) || 0;
+            
             if (employee.payType === 'weekly') {
                 // GM weekly salary - fixed amount regardless of hours
-                return employee.payRate;
+                return payRate;
             } else {
                 // Hourly - calculate with overtime
                 const regularHours = Math.min(weeklyHours, 40);
                 const overtimeHours = Math.max(0, weeklyHours - 40);
-                return (regularHours * employee.payRate) + (overtimeHours * employee.payRate * 1.5);
+                return (regularHours * payRate) + (overtimeHours * payRate * 1.5);
             }
         }
         
@@ -6981,18 +6984,22 @@
                 console.log(`Employee: ${employeeName}, PayType: ${employee.payType}, PayRate: ${employee.payRate}, Hours: ${employeeHours[employeeName]}`);
                 
                 let weeklyPay = 0;
+                // Ensure payRate is always a number
+                const payRate = parseFloat(employee.payRate) || 0;
+                
                 if (employee.payType === 'weekly') {
                     // GM weekly salary - fixed amount regardless of hours
-                    weeklyPay = employee.payRate || 0;
+                    weeklyPay = payRate;
                 } else {
                     // Hourly - calculate with overtime based on total hours
                     const totalHours = employeeHours[employeeName];
                     const regularHours = Math.min(totalHours, 40);
                     const overtimeHours = Math.max(0, totalHours - 40);
-                    const payRate = employee.payRate || 0;
                     weeklyPay = (regularHours * payRate) + (overtimeHours * payRate * 1.5);
                 }
                 
+                // Ensure weeklyPay is a number before adding
+                weeklyPay = parseFloat(weeklyPay) || 0;
                 console.log(`  Weekly Pay: $${weeklyPay}`);
                 totalScheduledPay += weeklyPay;
             });
@@ -7149,7 +7156,7 @@
                         });
                         
                         if (hasShifts && !scheduledGMs.has(employee.name)) {
-                            gmPayTotal += employee.payRate;
+                            gmPayTotal += parseFloat(employee.payRate) || 0;
                             scheduledGMs.add(employee.name);
                         }
                     }
@@ -7179,7 +7186,9 @@
             
             const gmPayTotalElement = document.getElementById('gmPayTotal');
             if (gmPayTotalElement) {
-                gmPayTotalElement.textContent = `$${gmPayTotal.toFixed(2)}`;
+                // Ensure gmPayTotal is a valid number
+                const validGmPayTotal = isNaN(gmPayTotal) ? 0 : parseFloat(gmPayTotal) || 0;
+                gmPayTotalElement.textContent = `$${validGmPayTotal.toFixed(2)}`;
             }
             
             const variance = validScheduledPay - weeklyPayrollBudget;
