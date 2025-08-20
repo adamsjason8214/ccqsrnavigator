@@ -63,22 +63,21 @@ exports.handler = async (event, context) => {
     const pdfBuffer = Buffer.from(pdfContent, 'base64');
     const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
     
-    // Build multipart form data
-    const formParts = [];
-    formParts.push(`--${boundary}`);
-    formParts.push('Content-Disposition: form-data; name="name"');
-    formParts.push('');
-    formParts.push(filename);
-    formParts.push(`--${boundary}`);
-    formParts.push(`Content-Disposition: form-data; name="file"; filename="${filename}"`);
-    formParts.push('Content-Type: application/pdf');
-    formParts.push('Content-Transfer-Encoding: base64');
-    formParts.push('');
-    formParts.push(pdfContent); // Send as base64 string
-    formParts.push(`--${boundary}--`);
+    // Build multipart form data with binary PDF
+    const textParts = [];
+    textParts.push(`--${boundary}`);
+    textParts.push('Content-Disposition: form-data; name="name"');
+    textParts.push('');
+    textParts.push(filename);
+    textParts.push(`--${boundary}`);
+    textParts.push(`Content-Disposition: form-data; name="file"; filename="${filename}"`);
+    textParts.push('Content-Type: application/pdf');
+    textParts.push('');
     
-    const formData = formParts.join('\r\n');
-    const formBuffer = Buffer.from(formData);
+    // Combine text parts with binary PDF data
+    const textBuffer = Buffer.from(textParts.join('\r\n') + '\r\n');
+    const endBuffer = Buffer.from(`\r\n--${boundary}--\r\n`);
+    const formBuffer = Buffer.concat([textBuffer, pdfBuffer, endBuffer]);
 
     console.log('Uploading attachment to Basecamp...');
 
