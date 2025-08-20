@@ -344,15 +344,26 @@ const BasecampIntegration = {
         doc.text(`Week Starting: ${weekStartDate}`, 40, 90);
         doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 105);
         
+        // Check if this is a Doughnut brand location
+        const isDoughnutBrand = brand === 'Doughnut' || (location && location.toUpperCase().startsWith('ODT'));
+        
         // Initialize tracking variables with 5 shift categories
+        const createShiftStructure = () => {
+            if (isDoughnutBrand) {
+                return { gm: 0, barista: 0, foh: 0, den: 0, kitchen: 0 };
+            } else {
+                return { managers: 0, drivers: 0, crew: 0 };
+            }
+        };
+        
         const shiftAnalysis = {
-            mon: { morning: { managers: 0, drivers: 0, crew: 0 }, lunch: { managers: 0, drivers: 0, crew: 0 }, midday: { managers: 0, drivers: 0, crew: 0 }, dinner: { managers: 0, drivers: 0, crew: 0 }, closing: { managers: 0, drivers: 0, crew: 0 } },
-            tue: { morning: { managers: 0, drivers: 0, crew: 0 }, lunch: { managers: 0, drivers: 0, crew: 0 }, midday: { managers: 0, drivers: 0, crew: 0 }, dinner: { managers: 0, drivers: 0, crew: 0 }, closing: { managers: 0, drivers: 0, crew: 0 } },
-            wed: { morning: { managers: 0, drivers: 0, crew: 0 }, lunch: { managers: 0, drivers: 0, crew: 0 }, midday: { managers: 0, drivers: 0, crew: 0 }, dinner: { managers: 0, drivers: 0, crew: 0 }, closing: { managers: 0, drivers: 0, crew: 0 } },
-            thu: { morning: { managers: 0, drivers: 0, crew: 0 }, lunch: { managers: 0, drivers: 0, crew: 0 }, midday: { managers: 0, drivers: 0, crew: 0 }, dinner: { managers: 0, drivers: 0, crew: 0 }, closing: { managers: 0, drivers: 0, crew: 0 } },
-            fri: { morning: { managers: 0, drivers: 0, crew: 0 }, lunch: { managers: 0, drivers: 0, crew: 0 }, midday: { managers: 0, drivers: 0, crew: 0 }, dinner: { managers: 0, drivers: 0, crew: 0 }, closing: { managers: 0, drivers: 0, crew: 0 } },
-            sat: { morning: { managers: 0, drivers: 0, crew: 0 }, lunch: { managers: 0, drivers: 0, crew: 0 }, midday: { managers: 0, drivers: 0, crew: 0 }, dinner: { managers: 0, drivers: 0, crew: 0 }, closing: { managers: 0, drivers: 0, crew: 0 } },
-            sun: { morning: { managers: 0, drivers: 0, crew: 0 }, lunch: { managers: 0, drivers: 0, crew: 0 }, midday: { managers: 0, drivers: 0, crew: 0 }, dinner: { managers: 0, drivers: 0, crew: 0 }, closing: { managers: 0, drivers: 0, crew: 0 } }
+            mon: { morning: createShiftStructure(), lunch: createShiftStructure(), midday: createShiftStructure(), dinner: createShiftStructure(), closing: createShiftStructure() },
+            tue: { morning: createShiftStructure(), lunch: createShiftStructure(), midday: createShiftStructure(), dinner: createShiftStructure(), closing: createShiftStructure() },
+            wed: { morning: createShiftStructure(), lunch: createShiftStructure(), midday: createShiftStructure(), dinner: createShiftStructure(), closing: createShiftStructure() },
+            thu: { morning: createShiftStructure(), lunch: createShiftStructure(), midday: createShiftStructure(), dinner: createShiftStructure(), closing: createShiftStructure() },
+            fri: { morning: createShiftStructure(), lunch: createShiftStructure(), midday: createShiftStructure(), dinner: createShiftStructure(), closing: createShiftStructure() },
+            sat: { morning: createShiftStructure(), lunch: createShiftStructure(), midday: createShiftStructure(), dinner: createShiftStructure(), closing: createShiftStructure() },
+            sun: { morning: createShiftStructure(), lunch: createShiftStructure(), midday: createShiftStructure(), dinner: createShiftStructure(), closing: createShiftStructure() }
         };
         
         let totalWeeklyHours = 0;
@@ -365,6 +376,12 @@ const BasecampIntegration = {
         let totalGMHours = 0;
         let totalHourlyManagerHours = 0;
         let totalOvertimeHours = 0;
+        
+        // Doughnut-specific role hours
+        let totalBaristaHours = 0;
+        let totalFOHHours = 0;
+        let totalDenHours = 0;
+        let totalKitchenHours = 0;
         
         // Days of week
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -500,7 +517,23 @@ const BasecampIntegration = {
                                     if (employeeEnd > period.start && start < period.end) {
                                         // Employee works during this shift period
                                         if (shiftAnalysis[day] && shiftAnalysis[day][shiftName]) {
-                                            shiftAnalysis[day][shiftName][roleCategory]++;
+                                            if (isDoughnutBrand) {
+                                                // Track specific Doughnut roles
+                                                const doughnutRole = role.toLowerCase();
+                                                if (doughnutRole.includes('gm')) {
+                                                    shiftAnalysis[day][shiftName].gm++;
+                                                } else if (doughnutRole === 'barista') {
+                                                    shiftAnalysis[day][shiftName].barista++;
+                                                } else if (doughnutRole === 'foh' || doughnutRole.includes('front of house')) {
+                                                    shiftAnalysis[day][shiftName].foh++;
+                                                } else if (doughnutRole === 'den') {
+                                                    shiftAnalysis[day][shiftName].den++;
+                                                } else if (doughnutRole === 'kitchen') {
+                                                    shiftAnalysis[day][shiftName].kitchen++;
+                                                }
+                                            } else {
+                                                shiftAnalysis[day][shiftName][roleCategory]++;
+                                            }
                                         }
                                     }
                                 });
@@ -513,7 +546,21 @@ const BasecampIntegration = {
                 totalWeeklyHours += empTotalHours;
                 
                 // Track hours by role type
-                if (isGM) {
+                if (isDoughnutBrand) {
+                    // Track Doughnut-specific roles
+                    const doughnutRole = role.toLowerCase();
+                    if (doughnutRole.includes('gm')) {
+                        totalGMHours += empTotalHours;
+                    } else if (doughnutRole === 'barista') {
+                        totalBaristaHours += empTotalHours;
+                    } else if (doughnutRole === 'foh' || doughnutRole.includes('front of house')) {
+                        totalFOHHours += empTotalHours;
+                    } else if (doughnutRole === 'den') {
+                        totalDenHours += empTotalHours;
+                    } else if (doughnutRole === 'kitchen') {
+                        totalKitchenHours += empTotalHours;
+                    }
+                } else if (isGM) {
                     totalGMHours += empTotalHours;
                 } else if (isHourlyManager) {
                     totalHourlyManagerHours += empTotalHours;
@@ -655,10 +702,14 @@ const BasecampIntegration = {
                     doc.text(`Bar/Cook: ${shiftData.crew}`, 320, yPos);
                     doc.text(`Total: ${shiftData.managers + shiftData.crew}`, 420, yPos);
                 } else if (isDoughnutBrand) {
-                    // For Doughnut locations, show role breakdown
-                    doc.text(`GM: ${shiftData.managers}`, 210, yPos);
-                    doc.text(`Staff: ${shiftData.crew}`, 320, yPos);
-                    doc.text(`Total: ${shiftData.managers + shiftData.crew}`, 420, yPos);
+                    // For Doughnut locations, show each position separately
+                    doc.text(`GM: ${shiftData.gm || 0}`, 190, yPos);
+                    doc.text(`Barista: ${shiftData.barista || 0}`, 250, yPos);
+                    doc.text(`FOH: ${shiftData.foh || 0}`, 320, yPos);
+                    doc.text(`Den: ${shiftData.den || 0}`, 380, yPos);
+                    doc.text(`Kitchen: ${shiftData.kitchen || 0}`, 430, yPos);
+                    const total = (shiftData.gm || 0) + (shiftData.barista || 0) + (shiftData.foh || 0) + (shiftData.den || 0) + (shiftData.kitchen || 0);
+                    doc.text(`Total: ${total}`, 500, yPos);
                 } else {
                     // Regular locations show standard roles
                     doc.text(`Mgrs: ${shiftData.managers}`, 210, yPos);
@@ -694,9 +745,9 @@ const BasecampIntegration = {
         doc.setFontSize(11);
         doc.setFont(undefined, 'normal');
         
-        // Check if this is a Taco or Donut brand location
+        // Check if this is a Taco or Doughnut brand location  
         const isTacoBrand = brand === 'Taco' || (location && location.toLowerCase().includes('taco'));
-        const isDonutBrand = brand === 'Donut' || (location && location.toLowerCase().includes('donut'));
+        const isDoughnutBrand = brand === 'Doughnut' || (location && location.toUpperCase().startsWith('ODT'));
         
         doc.text(`Total Weekly Hours: ${totalWeeklyHours.toFixed(1)} hours`, 60, yPos);
         yPos += 15;
@@ -709,11 +760,17 @@ const BasecampIntegration = {
             yPos += 15;
             doc.text(`Total Weekly GM Hours: ${totalGMHours.toFixed(1)} hours`, 60, yPos);
             yPos += 15;
-        } else if (isDonutBrand) {
-            // For Donut locations, show Donut-specific role labels
+        } else if (isDoughnutBrand) {
+            // For Doughnut locations, show each position separately
             doc.text(`Total Weekly GM Hours: ${totalGMHours.toFixed(1)} hours`, 60, yPos);
             yPos += 15;
-            doc.text(`Total Weekly Staff Hours (Barista/FOH/Den/Kitchen): ${totalCrewHours.toFixed(1)} hours`, 60, yPos);
+            doc.text(`Total Weekly Barista Hours: ${totalBaristaHours.toFixed(1)} hours`, 60, yPos);
+            yPos += 15;
+            doc.text(`Total Weekly FOH Hours: ${totalFOHHours.toFixed(1)} hours`, 60, yPos);
+            yPos += 15;
+            doc.text(`Total Weekly Den Hours: ${totalDenHours.toFixed(1)} hours`, 60, yPos);
+            yPos += 15;
+            doc.text(`Total Weekly Kitchen Hours: ${totalKitchenHours.toFixed(1)} hours`, 60, yPos);
             yPos += 15;
         } else {
             // Regular locations show standard roles
