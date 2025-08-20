@@ -5819,31 +5819,8 @@
                 
                 const weekStartStr = weekStart.toISOString().split('T')[0];
                 
-                // First check localStorage for any unsaved changes (for users without save permissions)
-                const storageKey = `schedule_${location}_${weekStartStr}`;
-                const localData = localStorage.getItem(storageKey);
-                let useLocalData = false;
-                
-                if (localData) {
-                    try {
-                        const parsed = JSON.parse(localData);
-                        console.log('Found local schedule data:', parsed);
-                        // Check if local data is newer than 24 hours
-                        const timestamp = new Date(parsed.timestamp || 0);
-                        const hoursSinceUpdate = (new Date() - timestamp) / (1000 * 60 * 60);
-                        if (hoursSinceUpdate < 24) {
-                            scheduleData = parsed.schedule || {};
-                            currentWeekSales = parsed.sales || { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
-                            console.log('Using local schedule data (', hoursSinceUpdate.toFixed(1), 'hours old)');
-                            useLocalData = true;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing local schedule data:', e);
-                    }
-                }
-                
                 // Load from database - backend expects 'location' not 'location_id' or 'brand'
-                if (!useLocalData && typeof DB_API !== 'undefined') {
+                if (typeof DB_API !== 'undefined') {
                     const params = {
                         location: location,  // Backend expects 'location'
                         week_start_date: weekStartStr
@@ -5881,6 +5858,25 @@
                 currentWeekSales = { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
             } catch (error) {
                 console.error('Error loading schedule data:', error);
+                
+                // Check if it's a network error
+                if (error.message && (error.message.includes('Network connection lost') || 
+                    error.message.includes('Failed to fetch') || 
+                    error.message.includes('ERR_INTERNET_DISCONNECTED'))) {
+                    
+                    // Network error - show user-friendly message
+                    console.log('Network error detected while loading schedule');
+                    
+                    if (typeof showError === 'function') {
+                        showError('Cannot connect to server. Please check your internet connection and try again.');
+                    }
+                } else {
+                    // Non-network error
+                    if (typeof showError === 'function') {
+                        showError('Error loading schedule data. Please try refreshing the page.');
+                    }
+                }
+                
                 // Initialize empty on error
                 scheduleData = {};
                 currentWeekSales = { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
@@ -5899,15 +5895,7 @@
             
             if (currentSecurityCode < 3) {
                 console.warn('User does not have permission to save schedule (security code:', currentSecurityCode, ')');
-                console.warn('Schedule changes will not be persisted to database');
-                // Still save to localStorage for temporary persistence
-                const storageKey = `schedule_${getCurrentLocation()}_${weekStart ? weekStart.toISOString().split('T')[0] : 'current'}`;
-                localStorage.setItem(storageKey, JSON.stringify({
-                    schedule: scheduleData,
-                    sales: currentWeekSales,
-                    timestamp: new Date().toISOString()
-                }));
-                console.log('Schedule saved to localStorage with key:', storageKey);
+                console.warn('Schedule changes will not be persisted');
                 return;
             }
             
@@ -6144,6 +6132,10 @@
         
         function renderScheduleTable() {
             const tbody = document.getElementById('scheduleTableBody');
+            if (!tbody) {
+                console.error('Schedule table body not found - scheduleTableBody element missing');
+                return;
+            }
             tbody.innerHTML = '';
             
             const currentBrand = getCurrentBrand();
@@ -6773,14 +6765,7 @@
             
             scheduleData[empId][field] = value;
             updateScheduleTotals();
-            saveScheduleData().then(() => {
-                // Check if user has save permissions
-                const currentUserRole = currentUser?.role || 'staff';
-                const currentSecurityCode = getSecurityCodeForRole(currentUserRole);
-                if (currentSecurityCode < 3) {
-                    console.log('Schedule changes saved locally (insufficient permissions for database save)');
-                }
-            });
+            saveScheduleData();
         }
         
         

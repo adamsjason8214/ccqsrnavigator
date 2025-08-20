@@ -3,8 +3,8 @@ const DB_API = {
     // Base URL for API calls (will be replaced with actual Netlify URL in production)
     baseUrl: '/.netlify/functions',
 
-    // Helper function for API calls
-    async apiCall(endpoint, method = 'GET', data = null) {
+    // Helper function for API calls with retry logic
+    async apiCall(endpoint, method = 'GET', data = null, retries = 3) {
         const options = {
             method,
             headers: {
@@ -34,27 +34,54 @@ const DB_API = {
             options.body = JSON.stringify(data);
         }
 
-        try {
-            console.log('DB_API: Making request to:', `${this.baseUrl}${endpoint}`);
-            console.log('DB_API: Request options:', options);
-            
-            const response = await fetch(`${this.baseUrl}${endpoint}`, options);
-            if (!response.ok) {
-                let errorDetails = response.statusText;
-                try {
-                    const errorBody = await response.text();
-                    console.error('API Error Response:', errorBody);
-                    errorDetails = errorBody || response.statusText;
-                } catch (e) {
-                    console.error('Could not parse error response');
+        // Retry logic for network failures
+        let lastError;
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                console.log(`DB_API: Making request to: ${this.baseUrl}${endpoint} (attempt ${attempt}/${retries})`);
+                console.log('DB_API: Request options:', options);
+                
+                const response = await fetch(`${this.baseUrl}${endpoint}`, options);
+                if (!response.ok) {
+                    let errorDetails = response.statusText;
+                    try {
+                        const errorBody = await response.text();
+                        console.error('API Error Response:', errorBody);
+                        errorDetails = errorBody || response.statusText;
+                    } catch (e) {
+                        console.error('Could not parse error response');
+                    }
+                    throw new Error(`API call failed: ${response.status} - ${errorDetails}`);
                 }
-                throw new Error(`API call failed: ${response.status} - ${errorDetails}`);
+                return await response.json();
+            } catch (error) {
+                lastError = error;
+                console.error(`API call error (attempt ${attempt}/${retries}):`, error);
+                
+                // Check if it's a network error
+                if (error.message && (error.message.includes('Failed to fetch') || 
+                    error.message.includes('NetworkError') || 
+                    error.message.includes('ERR_INTERNET_DISCONNECTED'))) {
+                    
+                    // If not the last attempt, wait before retrying
+                    if (attempt < retries) {
+                        const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5 seconds
+                        console.log(`Network error detected. Retrying in ${waitTime}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+                        continue;
+                    }
+                    
+                    // On final failure, throw a more user-friendly error
+                    throw new Error('Network connection lost. Please check your internet connection and try again.');
+                }
+                
+                // For non-network errors, don't retry
+                throw error;
             }
-            return await response.json();
-        } catch (error) {
-            console.error('API call error:', error);
-            throw error;
         }
+        
+        // If all retries failed
+        throw lastError || new Error('API call failed after multiple attempts');
     },
 
     // Schedule operations
