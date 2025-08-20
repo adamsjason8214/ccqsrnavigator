@@ -493,11 +493,11 @@ const BasecampIntegration = {
                                 // Check which shifts this employee overlaps with
                                 // Define shift periods in minutes from midnight
                                 const shiftPeriods = {
-                                    morning: { start: 5 * 60, end: 9 * 60 },    // 5am-9am (300-540)
-                                    lunch: { start: 10 * 60, end: 13 * 60 },    // 10am-1pm (600-780)
-                                    midday: { start: 13 * 60, end: 16 * 60 },   // 1pm-4pm (780-960)
-                                    dinner: { start: 16 * 60, end: 20 * 60 },   // 4pm-8pm (960-1200)
-                                    closing: { start: 21 * 60, end: 23 * 60 }   // 9pm-11pm (1260-1380)
+                                    morning: { start: 5 * 60, end: 10 * 60 },   // 5am-10am (300-600)
+                                    lunch: { start: 10 * 60, end: 14 * 60 },    // 10am-2pm (600-840)
+                                    midday: { start: 14 * 60, end: 17 * 60 },   // 2pm-5pm (840-1020)
+                                    dinner: { start: 17 * 60, end: 21 * 60 },   // 5pm-9pm (1020-1260)
+                                    closing: { start: 21 * 60, end: 24 * 60 }   // 9pm-12am (1260-1440)
                                 };
                                 
                                 // For each shift period, check if employee's shift overlaps
@@ -521,6 +521,11 @@ const BasecampIntegration = {
                                             if (isDoughnutBrand) {
                                                 // Track specific Doughnut roles
                                                 const doughnutRole = role.toLowerCase();
+                                                
+                                                // Debug: Log each person being counted
+                                                if (empData.name) {
+                                                    console.log(`Counting ${empData.name} (${doughnutRole}) for ${day} ${shiftName} shift`);
+                                                }
                                                 if (doughnutRole.includes('gm')) {
                                                     shiftAnalysis[day][shiftName].gm++;
                                                 } else if (doughnutRole === 'barista') {
@@ -676,7 +681,7 @@ const BasecampIntegration = {
         doc.setFontSize(10);
         
         // Create shift analysis table with 5 shifts
-        const shifts = ['Morning (5am-9am)', 'Lunch (10am-1pm)', 'Midday (1pm-4pm)', 'Dinner (4pm-8pm)', 'Closing (9pm-11pm)'];
+        const shifts = ['Morning (5am-10am)', 'Lunch (10am-2pm)', 'Midday (2pm-5pm)', 'Dinner (5pm-9pm)', 'Closing (9pm-12am)'];
         const shiftKeys = ['morning', 'lunch', 'midday', 'dinner', 'closing'];
         
         days.forEach((day, dayIndex) => {
