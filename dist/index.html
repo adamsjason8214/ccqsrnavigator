@@ -10,6 +10,16 @@
     <script src="updated-checklist-system.js"></script>
     <script src="basecamp-integration.js"></script>
     <script src="basecamp-integration-fix.js"></script>
+    <script>
+        // Ensure BasecampIntegration is available
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!window.BasecampIntegration) {
+                console.error('BasecampIntegration not loaded!');
+            } else {
+                console.log('BasecampIntegration loaded successfully');
+            }
+        });
+    </script>
     <script type="text/javascript">
         (function(){
             emailjs.init("YOUR_PUBLIC_KEY"); // You need to replace this with your EmailJS public key
@@ -7177,10 +7187,10 @@
                     roleDropdown.appendChild(option);
                 });
             // END TACO BRAND SPECIFIC MODIFICATION
-            // START DONUT BRAND SPECIFIC MODIFICATION
-            } else if (brand === 'Donut' || (location && location.toLowerCase().includes('donut'))) {
-                // Donut brand specific roles
-                const donutRoles = [
+            // START DOUGHNUT BRAND SPECIFIC MODIFICATION
+            } else if (brand === 'Doughnut' || (location && location.toUpperCase().startsWith('ODT'))) {
+                // Doughnut brand specific roles
+                const doughnutRoles = [
                     { value: 'GM', text: 'GM' },
                     { value: 'Barista', text: 'Barista' },
                     { value: 'FOH', text: 'Front of House (FOH)' },
@@ -7188,13 +7198,13 @@
                     { value: 'Kitchen', text: 'Kitchen' }
                 ];
                 
-                donutRoles.forEach(role => {
+                doughnutRoles.forEach(role => {
                     const option = document.createElement('option');
                     option.value = role.value;
                     option.textContent = role.text;
                     roleDropdown.appendChild(option);
                 });
-            // END DONUT BRAND SPECIFIC MODIFICATION
+            // END DOUGHNUT BRAND SPECIFIC MODIFICATION
             // START OFFICE ADMINISTRATION SPECIFIC MODIFICATION
             } else if (brand === 'Office Administration' && location === 'Office') {
                 // Office Administration specific roles
@@ -10369,9 +10379,20 @@ Custom users (${customUserCount} on this device) must be created separately on e
                 }
                 
                 // Check if we have the Basecamp integration for PDF generation
+                console.log('Checking BasecampIntegration:', window.BasecampIntegration);
+                console.log('Has generateSchedulePDF:', window.BasecampIntegration?.generateSchedulePDF);
+                
                 if (window.BasecampIntegration && window.BasecampIntegration.generateSchedulePDF) {
                     try {
                         showInfo('Generating schedule report...');
+                        
+                        console.log('Generating PDF with data:', {
+                            scheduleData,
+                            weekDate,
+                            currentLocation,
+                            currentBrand,
+                            currentWeekSales
+                        });
                         
                         // Generate the enhanced PDF
                         const pdfBase64 = window.BasecampIntegration.generateSchedulePDF(
@@ -10381,6 +10402,12 @@ Custom users (${customUserCount} on this device) must be created separately on e
                             currentBrand,
                             currentWeekSales
                         );
+                        
+                        if (!pdfBase64) {
+                            throw new Error('PDF generation returned empty result');
+                        }
+                        
+                        console.log('PDF generated, base64 length:', pdfBase64.length);
                         
                         // Convert base64 to binary
                         const byteCharacters = atob(pdfBase64);
