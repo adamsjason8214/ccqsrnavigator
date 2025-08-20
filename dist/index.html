@@ -6863,22 +6863,31 @@
             });
             
             // Second pass: calculate pay for each unique employee once
+            console.log('Calculating pay for employees:', Object.keys(employeeHours));
+            
             Object.keys(employeeHours).forEach(employeeName => {
                 const employee = employees.find(emp => emp.name === employeeName);
-                if (!employee) return;
+                if (!employee) {
+                    console.warn(`Employee ${employeeName} not found in employees array`);
+                    return;
+                }
+                
+                console.log(`Employee: ${employeeName}, PayType: ${employee.payType}, PayRate: ${employee.payRate}, Hours: ${employeeHours[employeeName]}`);
                 
                 let weeklyPay = 0;
                 if (employee.payType === 'weekly') {
                     // GM weekly salary - fixed amount regardless of hours
-                    weeklyPay = employee.payRate;
+                    weeklyPay = employee.payRate || 0;
                 } else {
                     // Hourly - calculate with overtime based on total hours
                     const totalHours = employeeHours[employeeName];
                     const regularHours = Math.min(totalHours, 40);
                     const overtimeHours = Math.max(0, totalHours - 40);
-                    weeklyPay = (regularHours * employee.payRate) + (overtimeHours * employee.payRate * 1.5);
+                    const payRate = employee.payRate || 0;
+                    weeklyPay = (regularHours * payRate) + (overtimeHours * payRate * 1.5);
                 }
                 
+                console.log(`  Weekly Pay: $${weeklyPay}`);
                 totalScheduledPay += weeklyPay;
             });
             
@@ -6991,8 +7000,15 @@
         }
         
         function updateBudgetComparison(totalScheduledPay) {
+            console.log('=== Updating Budget Comparison ===');
+            console.log('Total Scheduled Pay:', totalScheduledPay);
+            console.log('Current Week Sales:', currentWeekSales);
+            
             const totalWeeklySales = Object.values(currentWeekSales).reduce((sum, sales) => sum + sales, 0);
             const weeklyPayrollBudget = totalWeeklySales * 0.25; // 25% for payroll
+            
+            console.log('Total Weekly Sales:', totalWeeklySales);
+            console.log('Weekly Payroll Budget (25%):', weeklyPayrollBudget);
             
             // Extract GM pay from totalScheduledPay for display purposes
             let gmPayTotal = 0;
