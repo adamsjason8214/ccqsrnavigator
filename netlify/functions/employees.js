@@ -11,7 +11,21 @@ const SECURITY_CODES = {
 
 // Get security code for a role
 function getSecurityCode(role) {
-  return SECURITY_CODES[role] || 0;
+  // Handle numeric roles (1-5)
+  if (typeof role === 'string' && !isNaN(parseInt(role))) {
+    const numericRole = parseInt(role);
+    if (numericRole >= 1 && numericRole <= 5) {
+      return numericRole;
+    }
+  }
+  
+  // Handle string roles - normalize to lowercase and replace spaces with underscores
+  if (typeof role === 'string') {
+    const normalizedRole = role.toLowerCase().replace(/\s+/g, '_');
+    return SECURITY_CODES[normalizedRole] || 0;
+  }
+  
+  return 0;
 }
 
 exports.handler = async (event, context) => {
@@ -83,14 +97,17 @@ exports.handler = async (event, context) => {
         }
         
         // Check if user has permission to create employees (security code >= 3)
+        console.log('Checking permissions - Role received:', currentUserRole, 'Type:', typeof currentUserRole);
         const currentUserSecurityCode = getSecurityCode(currentUserRole);
+        console.log('Security code calculated:', currentUserSecurityCode);
+        
         if (currentUserSecurityCode < 3) {
           return {
             statusCode: 403,
             headers,
             body: JSON.stringify({ 
               error: 'Forbidden: You do not have permission to create employees',
-              details: `Your security code: ${currentUserSecurityCode}, Required: 3`
+              details: `Your role: ${currentUserRole}, Security code: ${currentUserSecurityCode}, Required: 3`
             })
           };
         }

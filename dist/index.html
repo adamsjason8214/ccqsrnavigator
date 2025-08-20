@@ -5055,7 +5055,8 @@
             localStorage.setItem('currentUser', JSON.stringify({
                 email: currentUser.email,
                 name: currentUser.name,
-                role: securityCode,  // Store the correct security code
+                role: currentUser.role,  // Store the original role name (e.g., 'super_admin')
+                securityCode: securityCode,  // Also store the numeric security code
                 brands: currentUser.brands,
                 locations: currentUser.locations
             }));
