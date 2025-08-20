@@ -3697,13 +3697,37 @@
             loadInventoryData(currentUser.email);
             loadEmployeeData(currentUser.email);
             
-            // Load schedule data and re-render the table
-            await loadScheduleData();
-            if (typeof renderScheduleTable === 'function') {
-                renderScheduleTable();
-                if (typeof updateScheduleTotals === 'function') {
-                    updateScheduleTotals();
+            // Check if we're on the schedule tab
+            if (currentTab === 'schedule') {
+                if (!location) {
+                    // No location selected - show message
+                    const scheduleSection = document.getElementById('scheduleSection');
+                    if (scheduleSection) {
+                        const scheduleContent = scheduleSection.querySelector('.schedule-content') || scheduleSection;
+                        scheduleContent.innerHTML = `
+                            <div style="text-align: center; padding: 50px; background: #f8f9fa; border-radius: 10px; margin: 20px;">
+                                <i class="fas fa-map-marker-alt" style="font-size: 48px; color: #e74c3c; margin-bottom: 20px;"></i>
+                                <h2 style="color: #2c3e50; margin-bottom: 10px;">No Location Selected</h2>
+                                <p style="color: #7f8c8d; font-size: 18px;">Please select a location from the dropdown above to view and manage the schedule.</p>
+                            </div>
+                        `;
+                    }
+                    stopScheduleAutoRefresh();
+                } else {
+                    // Location selected - load and render schedule
+                    await loadScheduleData();
+                    if (typeof renderScheduleTable === 'function') {
+                        renderScheduleTable();
+                        if (typeof updateScheduleTotals === 'function') {
+                            updateScheduleTotals();
+                        }
+                    }
+                    // Restart auto-refresh for the new location
+                    startScheduleAutoRefresh();
                 }
+            } else {
+                // Not on schedule tab, just load the data
+                await loadScheduleData();
             }
             
             loadPricingData(currentUser.email);
@@ -5111,7 +5135,10 @@
                 migrateDataToLocationKeys(currentUser.email);
                 loadInventoryData(currentUser.email);
                 loadEmployeeData(currentUser.email);
-                loadScheduleData();
+                // Only load schedule data if a location is selected
+                if (getCurrentLocation()) {
+                    loadScheduleData();
+                }
                 loadPricingData(currentUser.email);
                 
                 if (typeof loadMonthlyPricingData === 'function') {
@@ -5245,14 +5272,16 @@
                 loadInventoryData(currentUser.email);
                 loadEmployeeData(currentUser.email);
                 
-                // Load and render schedule data
-                loadScheduleData().then(() => {
-                    console.log('Schedule loaded after login for user:', currentUser.email);
-                    renderScheduleTable();
-                    if (typeof updateScheduleTotals === 'function') {
-                        updateScheduleTotals();
-                    }
-                });
+                // Load and render schedule data only if location is selected
+                if (getCurrentLocation()) {
+                    loadScheduleData().then(() => {
+                        console.log('Schedule loaded after login for user:', currentUser.email);
+                        renderScheduleTable();
+                        if (typeof updateScheduleTotals === 'function') {
+                            updateScheduleTotals();
+                        }
+                    });
+                }
                 
                 loadPricingData(currentUser.email);
                 
@@ -7837,7 +7866,28 @@
             
             // Handle schedule tab auto-refresh
             if (tabName === 'schedule') {
-                // Start auto-refresh when entering schedule tab
+                // Check if a location is selected first
+                const currentLocation = getCurrentLocation();
+                
+                if (!currentLocation) {
+                    // No location selected - show message instead of loading schedule
+                    const scheduleSection = document.getElementById('scheduleSection');
+                    if (scheduleSection) {
+                        const scheduleContent = scheduleSection.querySelector('.schedule-content') || scheduleSection;
+                        scheduleContent.innerHTML = `
+                            <div style="text-align: center; padding: 50px; background: #f8f9fa; border-radius: 10px; margin: 20px;">
+                                <i class="fas fa-map-marker-alt" style="font-size: 48px; color: #e74c3c; margin-bottom: 20px;"></i>
+                                <h2 style="color: #2c3e50; margin-bottom: 10px;">No Location Selected</h2>
+                                <p style="color: #7f8c8d; font-size: 18px;">Please select a location from the dropdown above to view and manage the schedule.</p>
+                            </div>
+                        `;
+                    }
+                    // Stop auto-refresh since no location
+                    stopScheduleAutoRefresh();
+                    return;
+                }
+                
+                // Start auto-refresh when entering schedule tab with location
                 startScheduleAutoRefresh();
                 // Load employees from database first
                 loadEmployeeData().then(() => {
