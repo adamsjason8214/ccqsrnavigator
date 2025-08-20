@@ -10174,6 +10174,18 @@ Custom users (${customUserCount} on this device) must be created separately on e
 
             // Schedule Management Event Listeners
             
+            // Check and ensure BasecampIntegration is loaded
+            if (!window.BasecampIntegration) {
+                console.warn('BasecampIntegration not loaded on initial check, attempting to reload...');
+                // Try to load it from the global scope
+                const script = document.createElement('script');
+                script.src = 'basecamp-integration.js';
+                script.onload = () => {
+                    console.log('BasecampIntegration reloaded:', window.BasecampIntegration ? 'Success' : 'Failed');
+                };
+                document.head.appendChild(script);
+            }
+            
             // Employee management button
             document.getElementById('addEmployeeBtn').addEventListener('click', () => {
                 const userRole = currentUser.rbac ? currentUser.rbac.role : currentUser.role;
@@ -10315,6 +10327,9 @@ Custom users (${customUserCount} on this device) must be created separately on e
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading to Basecamp...';
                     
                     // Submit to Basecamp with sales data
+                    console.log('Checking BasecampIntegration:', window.BasecampIntegration);
+                    console.log('Has submitScheduleToBasecamp:', window.BasecampIntegration?.submitScheduleToBasecamp);
+                    
                     if (window.BasecampIntegration && window.BasecampIntegration.submitScheduleToBasecamp) {
                         const result = await window.BasecampIntegration.submitScheduleToBasecamp(
                             scheduleData,

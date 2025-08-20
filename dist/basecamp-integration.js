@@ -1,6 +1,8 @@
 // Basecamp Integration for CCQSR Navigator
 // This module handles OAuth authentication and PDF uploads to Basecamp
 
+console.log('Loading Basecamp Integration module...');
+
 const BasecampIntegration = {
     // Configuration
     config: {
@@ -981,5 +983,9 @@ document.addEventListener('DOMContentLoaded', function() {
     enhanceChecklistSubmission();
 });
 
-// Export for use in other modules
-window.BasecampIntegration = BasecampIntegration;
+// Export for use in other modules (move outside DOMContentLoaded)
+if (typeof window !== 'undefined') {
+    window.BasecampIntegration = BasecampIntegration;
+    console.log('BasecampIntegration attached to window:', window.BasecampIntegration ? 'Success' : 'Failed');
+    console.log('Available methods:', Object.keys(BasecampIntegration));
+}
