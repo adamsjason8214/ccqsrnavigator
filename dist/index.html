@@ -4284,6 +4284,12 @@
                             color: #856404;
                         }
                         
+                        .container-size {
+                            background-color: #e3f2fd;
+                            font-weight: 500;
+                            text-align: center;
+                        }
+                        
                         .footer {
                             margin-top: 30px;
                             text-align: center;
@@ -4312,11 +4318,12 @@
                     <table class="prep-table">
                         <thead>
                             <tr>
-                                <th style="width: 25%;">Item</th>
-                                <th style="width: 35%;">Notes</th>
-                                <th style="width: 12%;">Par Level</th>
-                                <th style="width: 13%;">Current Stock</th>
-                                <th style="width: 15%;">Prep Amount</th>
+                                <th style="width: 20%;">Item</th>
+                                <th style="width: 28%;">Notes</th>
+                                <th style="width: 10%;">Par Level</th>
+                                <th style="width: 12%;">Current Stock</th>
+                                <th style="width: 12%;">Prep Amount</th>
+                                <th style="width: 18%;">Container Size</th>
                             </tr>
                         </thead>
                         <tbody>`;
@@ -4347,12 +4354,13 @@
                 const allItems = [...itemsNeedingPrep, ...itemsNoData, ...itemsAdequatelyStocked];
                 
                 if (allItems.length === 0) {
-                    html += `<tr><td colspan="5" style="text-align: center; padding: 20px; color: #666; font-style: italic;">No items configured for this area</td></tr>`;
+                    html += `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666; font-style: italic;">No items configured for this area</td></tr>`;
                 } else {
                     allItems.forEach(item => {
                         const itemData = currentPrepData[item.name] || {};
                         const parLevelData = parLevels[item.name] || {};
                         const parLevel = typeof parLevelData === 'object' ? (parseFloat(parLevelData.level) || 0) : (parseFloat(parLevelData) || 0);
+                        const containerSize = typeof parLevelData === 'object' ? (parLevelData.containerSize || 'Not Set') : 'Not Set';
                         const currentStock = parseFloat(itemData.currentStock) || 0;
                         const prepAmount = itemData.prepAmount || '';
                         const stockPercentage = parLevel > 0 && currentStock > 0 ? ((currentStock / parLevel) * 100).toFixed(1) : '';
@@ -4386,6 +4394,7 @@
                                 ${stockPercentage ? `<br><small style="color: #666;">${stockPercentage}% of par</small>` : ''}
                             </td>
                             <td class="number-field prep-amount">${prepAmount}</td>
+                            <td class="container-size">${containerSize}</td>
                         </tr>`;
                     });
                 }
@@ -4425,11 +4434,12 @@
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                         <thead>
                             <tr style="background-color: #f8f9fa;">
-                                <th style="border: 1px solid #ddd; padding: 8px; width: 25%;">Item</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; width: 30%;">Notes</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; width: 15%;">Par Level</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; width: 15%;">Current Stock</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; width: 15%;">Prep Amount</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; width: 20%;">Item</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; width: 25%;">Notes</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; width: 12%;">Par Level</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; width: 13%;">Current Stock</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; width: 13%;">Prep Amount</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; width: 17%;">Container Size</th>
                             </tr>
                         </thead>
                         <tbody>`;
