@@ -4143,7 +4143,7 @@
             }
         }
         
-        function printPrepList() {
+        async function printPrepList() {
             const date = document.getElementById('prepListDate').value;
             const day = document.getElementById('prepListDay').value;
             
@@ -4153,7 +4153,7 @@
             }
             
             // Generate fresh print content with current values
-            const printHTML = generatePrintablePrepList(date, day);
+            const printHTML = await generatePrintablePrepList(date, day);
             
             const printWindow = window.open('', '', 'height=800,width=1200');
             printWindow.document.write(printHTML);
@@ -4165,7 +4165,7 @@
             }, 500);
         }
         
-        function generatePrintablePrepList(date, day) {
+        async function generatePrintablePrepList(date, day) {
             // Get current data from inputs
             const currentPrepData = {};
             document.querySelectorAll('#prepListContainer input').forEach(input => {
@@ -4175,9 +4175,22 @@
                 currentPrepData[item][field] = input.value;
             });
             
-            // Get par levels for the selected day
-            const parKey = `parLevels_${currentUser.email}_${day}`;
-            const parLevels = JSON.parse(localStorage.getItem(parKey) || '{}');
+            // Get par levels from database for the selected day and location
+            const location = getCurrentLocation();
+            let parLevels = {};
+            
+            try {
+                const parListResult = await DB_API.parLists.get({ 
+                    location: location, 
+                    day_of_week: day 
+                });
+                parLevels = parListResult.length > 0 ? parListResult[0].par_levels : {};
+            } catch (error) {
+                console.error('Error loading par levels for print:', error);
+                // Fallback to localStorage if database fails
+                const parKey = `parLevels_${currentUser.email}_${day}`;
+                parLevels = JSON.parse(localStorage.getItem(parKey) || '{}');
+            }
             
             // Group items by area
             const itemsByArea = {};
@@ -4359,8 +4372,14 @@
                     allItems.forEach(item => {
                         const itemData = currentPrepData[item.name] || {};
                         const parLevelData = parLevels[item.name] || {};
+                        
+                        // Debug logging for container size issue
+                        if (item.name === 'SAUCE POURED BINS') {
+                            console.log('SAUCE POURED BINS parLevelData:', parLevelData);
+                        }
+                        
                         const parLevel = typeof parLevelData === 'object' ? (parseFloat(parLevelData.level) || 0) : (parseFloat(parLevelData) || 0);
-                        const containerSize = typeof parLevelData === 'object' ? (parLevelData.containerSize || 'Not Set') : 'Not Set';
+                        const containerSize = typeof parLevelData === 'object' && parLevelData.containerSize ? parLevelData.containerSize : '';
                         const currentStock = parseFloat(itemData.currentStock) || 0;
                         const prepAmount = itemData.prepAmount || '';
                         const stockPercentage = parLevel > 0 && currentStock > 0 ? ((currentStock / parLevel) * 100).toFixed(1) : '';
@@ -4394,7 +4413,7 @@
                                 ${stockPercentage ? `<br><small style="color: #666;">${stockPercentage}% of par</small>` : ''}
                             </td>
                             <td class="number-field prep-amount">${prepAmount}</td>
-                            <td class="container-size">${containerSize}</td>
+                            <td class="container-size">${containerSize || 'Not Set'}</td>
                         </tr>`;
                     });
                 }
@@ -4448,7 +4467,7 @@
                     const itemData = prepData[item.name] || {};
                     const parLevelData = parLevels[item.name] || {};
                     const parLevel = typeof parLevelData === 'object' ? (parseFloat(parLevelData.level) || 0) : (parseFloat(parLevelData) || 0);
-                    const containerSize = typeof parLevelData === 'object' ? (parLevelData.containerSize || '') : '';
+                    const containerSize = typeof parLevelData === 'object' && parLevelData.containerSize ? parLevelData.containerSize : '';
                     const currentStock = parseFloat(itemData.currentStock) || 0;
                     const prepAmount = itemData.prepAmount || '';
                     
