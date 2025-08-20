@@ -5934,16 +5934,16 @@
                 tacoRoles.forEach(role => {
                     roleOptions += `<option value="${role.value}" ${currentRole === role.value ? 'selected' : ''}>${role.text}</option>`;
                 });
-            } else if (currentBrand === 'Donut' || (currentLocation && currentLocation.toLowerCase().includes('donut'))) {
-                // Donut brand roles
-                const donutRoles = [
+            } else if (currentBrand === 'Doughnut' || (currentLocation && currentLocation.toUpperCase().startsWith('ODT'))) {
+                // Doughnut brand roles
+                const doughnutRoles = [
                     { value: 'GM', text: 'GM' },
                     { value: 'Barista', text: 'Barista' },
                     { value: 'FOH', text: 'Front of House (FOH)' },
                     { value: 'Den', text: 'Den' },
                     { value: 'Kitchen', text: 'Kitchen' }
                 ];
-                donutRoles.forEach(role => {
+                doughnutRoles.forEach(role => {
                     roleOptions += `<option value="${role.value}" ${currentRole === role.value ? 'selected' : ''}>${role.text}</option>`;
                 });
             } else if (currentBrand === 'Office Administration' && currentLocation === 'Office') {
@@ -6002,15 +6002,15 @@
                 tacoRoles.forEach(role => {
                     roleOptions += `<option value="${role.value}" ${currentRole === role.value ? 'selected' : ''}>${role.text}</option>`;
                 });
-            } else if (currentBrand === 'Donut' || (currentLocation && currentLocation.toLowerCase().includes('donut'))) {
-                const donutRoles = [
+            } else if (currentBrand === 'Doughnut' || (currentLocation && currentLocation.toUpperCase().startsWith('ODT'))) {
+                const doughnutRoles = [
                     { value: 'GM', text: 'GM' },
                     { value: 'Barista', text: 'Barista' },
                     { value: 'FOH', text: 'Front of House (FOH)' },
                     { value: 'Den', text: 'Den' },
                     { value: 'Kitchen', text: 'Kitchen' }
                 ];
-                donutRoles.forEach(role => {
+                doughnutRoles.forEach(role => {
                     roleOptions += `<option value="${role.value}" ${currentRole === role.value ? 'selected' : ''}>${role.text}</option>`;
                 });
             } else if (currentBrand === 'Office Administration' || currentLocation === 'Office') {
