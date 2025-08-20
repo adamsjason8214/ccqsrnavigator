@@ -428,7 +428,6 @@ const BasecampIntegration = {
                 
                 // Check if this is a Taco or Doughnut brand location
                 const isTacoBrand = brand === 'Taco' || (location && location.toLowerCase().includes('taco'));
-                const isDoughnutBrand = brand === 'Doughnut' || (location && location.toUpperCase().startsWith('ODT'));
                 
                 if (isTacoBrand) {
                     // Taco brand specific role categories
@@ -694,7 +693,6 @@ const BasecampIntegration = {
                 
                 // Check if this is a Taco or Doughnut brand location
                 const isTacoBrand = brand === 'Taco' || (location && location.toLowerCase().includes('taco'));
-                const isDoughnutBrand = brand === 'Doughnut' || (location && location.toUpperCase().startsWith('ODT'));
                 
                 doc.text(`  ${shiftLabel}:`, 60, yPos);
                 
@@ -749,7 +747,6 @@ const BasecampIntegration = {
         
         // Check if this is a Taco or Doughnut brand location  
         const isTacoBrand = brand === 'Taco' || (location && location.toLowerCase().includes('taco'));
-        const isDoughnutBrand = brand === 'Doughnut' || (location && location.toUpperCase().startsWith('ODT'));
         
         doc.text(`Total Weekly Hours: ${totalWeeklyHours.toFixed(1)} hours`, 60, yPos);
         yPos += 15;
