@@ -2358,6 +2358,15 @@
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 20px;">
                             <div>
+                                <label><strong>Total Projected Sales</strong></label>
+                                <div id="totalProjectedSales" style="font-size: 1.5rem; font-weight: bold; color: #3498db;">$0</div>
+                            </div>
+                            <div>
+                                <label><strong>Total Projected Payroll Budget</strong></label>
+                                <div id="totalProjectedPayrollBudget" style="font-size: 1.5rem; font-weight: bold; color: #9b59b6;">$0</div>
+                                <small style="color: #7f8c8d;">25% of projected sales</small>
+                            </div>
+                            <div>
                                 <label><strong>Total Scheduled Pay</strong></label>
                                 <div id="totalScheduledPay" style="font-size: 1.5rem; font-weight: bold; color: #2c3e50;">$0</div>
                             </div>
@@ -7053,6 +7062,17 @@
             
             console.log('Total Weekly Sales:', totalWeeklySales);
             console.log('Weekly Payroll Budget (25%):', weeklyPayrollBudget);
+            
+            // Update the new total projected sales and payroll budget fields
+            const totalProjectedSalesElement = document.getElementById('totalProjectedSales');
+            if (totalProjectedSalesElement) {
+                totalProjectedSalesElement.textContent = `$${totalWeeklySales.toFixed(2)}`;
+            }
+            
+            const totalProjectedPayrollBudgetElement = document.getElementById('totalProjectedPayrollBudget');
+            if (totalProjectedPayrollBudgetElement) {
+                totalProjectedPayrollBudgetElement.textContent = `$${weeklyPayrollBudget.toFixed(2)}`;
+            }
             
             // Extract GM pay from totalScheduledPay for display purposes
             let gmPayTotal = 0;
